@@ -1,0 +1,98 @@
+{
+  "schema_version": "1.0",
+  "id": "GPT-01_0",
+  "team": "GPT",
+  "slot": 1,
+  "version": 0,
+  "replaces": null,
+  "name": "저평가 배당 장기",
+  "philosophy": "PBR 1 미만·배당 3% 이상 대형주를 고르게 담아 오래 들고, 추세가 꺾이면 정리한다.",
+  "submitted_at": "2026-10-10T20:00:00+09:00",
+  "universe": {
+    "markets": [
+      "KOSPI",
+      "KOSDAQ"
+    ],
+    "min_value_ma20": 2000000000,
+    "marcap_min": 500000000000,
+    "filters": [
+      {
+        "left": {
+          "ind": "PBR"
+        },
+        "op": "between",
+        "right": [
+          0.2,
+          1.0
+        ]
+      },
+      {
+        "left": {
+          "ind": "DIV_YIELD"
+        },
+        "op": ">=",
+        "right": 3.0
+      }
+    ]
+  },
+  "entry": {
+    "logic": "all",
+    "conditions": [
+      {
+        "left": {
+          "ind": "CLOSE"
+        },
+        "op": ">",
+        "right": {
+          "ind": "MA",
+          "n": 120
+        }
+      }
+    ],
+    "rank": {
+      "by": {
+        "ind": "DIV_YIELD"
+      },
+      "order": "desc"
+    },
+    "max_new_per_day": 3
+  },
+  "position": {
+    "max_positions": 8,
+    "sizing": "fixed_pct",
+    "pct_per_position": 12,
+    "entry_order": {
+      "type": "open"
+    },
+    "split_buy": [
+      {
+        "pct": 100,
+        "when": "entry"
+      }
+    ]
+  },
+  "exit": {
+    "take_profit": [],
+    "stop_loss_pct": null,
+    "trailing_stop_pct": 15,
+    "max_hold_days": 250,
+    "signal_exit": {
+      "logic": "any",
+      "conditions": [
+        {
+          "left": {
+            "ind": "PBR"
+          },
+          "op": ">",
+          "right": 1.5
+        }
+      ]
+    }
+  },
+  "risk": {
+    "cash_reserve_pct": 4,
+    "max_weight_pct": 15,
+    "reentry_cooldown_days": 20,
+    "halt_if_drawdown_pct": null
+  }
+}

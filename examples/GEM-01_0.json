@@ -1,0 +1,131 @@
+{
+  "schema_version": "1.0",
+  "id": "GEM-01_0",
+  "team": "GEM",
+  "slot": 1,
+  "version": 0,
+  "replaces": null,
+  "name": "정배열 눌림목 분할",
+  "philosophy": "60일선 위 상승추세 종목이 RSI 과매도로 눌렸을 때 두 번에 나눠 사고, 두 번에 나눠 판다.",
+  "submitted_at": "2026-10-10T20:00:00+09:00",
+  "universe": {
+    "markets": [
+      "KOSPI"
+    ],
+    "min_value_ma20": 5000000000,
+    "filters": [
+      {
+        "left": {
+          "ind": "MA",
+          "n": 20
+        },
+        "op": ">",
+        "right": {
+          "ind": "MA",
+          "n": 60
+        }
+      }
+    ]
+  },
+  "entry": {
+    "logic": "all",
+    "conditions": [
+      {
+        "left": {
+          "ind": "RSI",
+          "n": 14
+        },
+        "op": "between",
+        "right": [
+          25,
+          40
+        ]
+      },
+      {
+        "left": {
+          "ind": "CLOSE"
+        },
+        "op": ">",
+        "right": {
+          "ind": "MA",
+          "n": 60
+        }
+      },
+      {
+        "left": {
+          "ind": "IDX_CLOSE",
+          "market": "KOSPI"
+        },
+        "op": ">",
+        "right": {
+          "ind": "IDX_MA",
+          "market": "KOSPI",
+          "n": 60
+        }
+      }
+    ],
+    "rank": {
+      "by": {
+        "ind": "RSI",
+        "n": 14
+      },
+      "order": "asc"
+    },
+    "max_new_per_day": 2
+  },
+  "position": {
+    "max_positions": 5,
+    "sizing": "equal",
+    "entry_order": {
+      "type": "limit",
+      "offset_pct": -1.0
+    },
+    "split_buy": [
+      {
+        "pct": 50,
+        "when": "entry"
+      },
+      {
+        "pct": 50,
+        "when": "drop_pct",
+        "value": -3.0
+      }
+    ],
+    "split_expire_days": 10
+  },
+  "exit": {
+    "take_profit": [
+      {
+        "gain_pct": 5,
+        "sell_pct": 50
+      },
+      {
+        "gain_pct": 10,
+        "sell_pct": 50
+      }
+    ],
+    "stop_loss_pct": -8.0,
+    "max_hold_days": 30,
+    "signal_exit": {
+      "logic": "any",
+      "conditions": [
+        {
+          "left": {
+            "ind": "CLOSE"
+          },
+          "op": "cross_below",
+          "right": {
+            "ind": "MA",
+            "n": 60
+          }
+        }
+      ]
+    }
+  },
+  "risk": {
+    "cash_reserve_pct": 10,
+    "max_weight_pct": 25,
+    "reentry_cooldown_days": 5,
+    "halt_if_drawdown_pct": 25
+  }
+}

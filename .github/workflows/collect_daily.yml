@@ -1,0 +1,52 @@
+name: 일일 전체 업데이트
+
+# 평일 18:10 KST — 오늘 시세 수집, 최근 빠진 날 자동 복구,
+# 종목 마스터 재생성, AI용 최신 요약(data/latest) 갱신
+
+on:
+  schedule:
+    - cron: "10 9 * * 1-5"   # 09:10 UTC = 18:10 KST
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "수집 날짜 YYYYMMDD (비우면 오늘)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: data-write
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: 수집 · 복구 · 요약
+        env:
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
+          TZ: Asia/Seoul
+        run: python scripts/collect_daily.py --date "${{ github.event.inputs.date }}" --retries 3 --wait 600
+
+      - name: 커밋
+        if: always()
+        run: |
+          git config user.name  "vai-arena-bot"
+          git config user.email "vai-arena-bot@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          D=$(python -c "import json;print(json.load(open('data/_status/last_collect.json'))['date'])")
+          git commit -m "data: ${D} 일일 업데이트"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push

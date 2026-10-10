@@ -1,0 +1,105 @@
+name: 10년치 백필 (최초 1회)
+
+# Actions 탭 → "10년치 백필" → Run workflow
+# 연도별로 나눠 2개씩 동시에 받습니다. 중간에 끊겨도 다시 실행하면 이어서 받습니다.
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: "시작일 YYYYMMDD"
+        required: true
+        default: "20161010"
+      end_date:
+        description: "종료일 YYYYMMDD (비우면 어제)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: data-write
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      ranges: ${{ steps.p.outputs.ranges }}
+    steps:
+      - id: p
+        run: |
+          python3 - <<'EOF' >> "$GITHUB_OUTPUT"
+          import json, datetime as dt
+          s = "${{ github.event.inputs.start_date }}"
+          e = "${{ github.event.inputs.end_date }}" or (dt.datetime.utcnow() + dt.timedelta(hours=9) - dt.timedelta(days=1)).strftime("%Y%m%d")
+          r = []
+          for y in range(int(s[:4]), int(e[:4]) + 1):
+              a = max(s, f"{y}0101"); b = min(e, f"{y}1231")
+              if a <= b: r.append({"year": str(y), "start": a, "end": b})
+          print("ranges=" + json.dumps(r))
+          EOF
+
+  backfill:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        range: ${{ fromJson(needs.plan.outputs.ranges) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: ${{ matrix.range.year }}년 수집
+        timeout-minutes: 320
+        env:
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
+          TZ: Asia/Seoul
+        run: python scripts/backfill.py --start ${{ matrix.range.start }} --end ${{ matrix.range.end }}
+
+      - name: 받은 만큼 커밋 (실패·시간초과여도 저장)
+        if: always()
+        run: |
+          git config user.name  "vai-arena-bot"
+          git config user.email "vai-arena-bot@users.noreply.github.com"
+          git add data/daily/${{ matrix.range.year }} data/index/${{ matrix.range.year }}.csv data/_status 2>/dev/null || true
+          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          git commit -m "data: ${{ matrix.range.year }}년 백필 (${{ matrix.range.start }}~${{ matrix.range.end }})"
+          for i in 1 2 3 4 5; do
+            git pull --rebase -X theirs origin "${GITHUB_REF_NAME}" && git push && exit 0
+            sleep $((RANDOM % 20 + 10))
+          done
+          exit 1
+
+  finalize:
+    needs: backfill
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: 종목 마스터 + AI용 최신 요약 생성
+        run: |
+          python scripts/rebuild_master.py
+          python scripts/build_latest.py
+      - name: 커밋
+        run: |
+          git config user.name  "vai-arena-bot"
+          git config user.email "vai-arena-bot@users.noreply.github.com"
+          git add data/master data/latest
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "data: 백필 완료 — 마스터·최신 요약 갱신"
+          git pull --rebase origin "${GITHUB_REF_NAME}" && git push

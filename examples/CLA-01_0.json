@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0",
+  "id": "CLA-01_0",
+  "team": "CLA",
+  "slot": 1,
+  "version": 0,
+  "replaces": null,
+  "name": "거래량 폭발 추격",
+  "philosophy": "평소보다 거래량이 3배 이상 터지며 양봉으로 마감한 종목은 다음 날도 관심이 이어진다는 가정. 짧게 먹고 빠진다.",
+  "submitted_at": "2026-10-10T20:00:00+09:00",
+  "universe": {
+    "markets": [
+      "KOSPI",
+      "KOSDAQ"
+    ],
+    "min_value_ma20": 3000000000,
+    "price_min": 2000,
+    "price_max": null,
+    "marcap_min": 100000000000,
+    "marcap_max": null,
+    "filters": []
+  },
+  "entry": {
+    "logic": "all",
+    "conditions": [
+      {
+        "left": {
+          "ind": "VOL_RATIO",
+          "n": 20
+        },
+        "op": ">=",
+        "right": 3.0
+      },
+      {
+        "left": {
+          "ind": "BODY_PCT"
+        },
+        "op": ">",
+        "right": 2.0
+      },
+      {
+        "left": {
+          "ind": "CLOSE"
+        },
+        "op": ">",
+        "right": {
+          "ind": "MA",
+          "n": 20
+        }
+      },
+      {
+        "left": {
+          "ind": "CHANGE_PCT",
+          "n": 1
+        },
+        "op": "<",
+        "right": 20.0
+      }
+    ],
+    "rank": {
+      "by": {
+        "ind": "VOL_RATIO",
+        "n": 20
+      },
+      "order": "desc"
+    },
+    "max_new_per_day": 1
+  },
+  "position": {
+    "max_positions": 1,
+    "sizing": "all_in",
+    "pct_per_position": null,
+    "entry_order": {
+      "type": "open"
+    },
+    "split_buy": [
+      {
+        "pct": 100,
+        "when": "entry"
+      }
+    ]
+  },
+  "exit": {
+    "take_profit": [
+      {
+        "gain_pct": 4.5,
+        "sell_pct": 100
+      }
+    ],
+    "stop_loss_pct": -4.0,
+    "trailing_stop_pct": null,
+    "max_hold_days": 5,
+    "signal_exit": null
+  },
+  "risk": {
+    "cash_reserve_pct": 0,
+    "max_weight_pct": 100,
+    "reentry_cooldown_days": 3,
+    "halt_if_drawdown_pct": null
+  }
+}

@@ -1,0 +1,22 @@
+name: 전략 파일 검증
+
+on:
+  pull_request:
+    paths: ["strategies/**", "schema/**", "vai_arena/**"]
+  push:
+    paths: ["strategies/**", "schema/**", "vai_arena/**"]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install jsonschema
+      - name: 예시 파일 자체 점검
+        run: python -m vai_arena.validate examples --no-path-check
+      - name: 제출된 전략 검증
+        run: python -m vai_arena.validate strategies

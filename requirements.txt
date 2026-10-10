@@ -1,0 +1,4 @@
+pandas>=2.0
+pykrx>=1.0.51
+finance-datareader>=0.9.90
+jsonschema>=4.20
