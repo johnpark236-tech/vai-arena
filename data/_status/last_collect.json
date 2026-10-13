@@ -1,31 +1,34 @@
 {
-  "date": "20261013",
-  "today": "saved",
-  "repaired": [],
-  "repair_failed": [
-    "20260914",
-    "20260915",
-    "20260916",
-    "20260917",
-    "20260918",
-    "20260921",
-    "20260922",
-    "20260923",
-    "20260924",
-    "20260925",
-    "20260928",
-    "20260929",
-    "20260930",
-    "20261001",
-    "20261002",
-    "20261005",
-    "20261006",
-    "20261007",
-    "20261008",
-    "20261009",
-    "20261012"
+  "date": "20261014",
+  "today": "not_closed",
+  "repaired": [
+    "20261013"
   ],
-  "notes": [],
+  "repair_failed": {
+    "20260914": "20260914 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)",
+    "20260915": "20260915 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)",
+    "20260916": "20260916 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)",
+    "20260917": "20260917 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)",
+    "20260918": "20260918 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)",
+    "20260921": "20260921 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)",
+    "20260922": "20260922 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)",
+    "20260923": "20260923 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)",
+    "20260924": "20260924 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)",
+    "20260925": "20260925 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)",
+    "20260928": "20260928 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)",
+    "20260929": "20260929 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)",
+    "20260930": "20260930 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)",
+    "20261001": "20261001 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)",
+    "20261002": "20261002 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)",
+    "20261005": "20261005 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)",
+    "20261006": "20261006 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)",
+    "20261007": "20261007 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)",
+    "20261008": "20261008 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)",
+    "20261009": "20261009 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)"
+  },
+  "notes": [
+    "KRX_ID/KRX_PW 미등록 — pykrx 사용 불가, 최근 1일 대체 수집(FDR)만 가능. 저장소 Settings → Secrets에 등록 필요"
+  ],
   "ok": true,
-  "finished_at": "2026-10-13T03:55:26+09:00"
+  "finished_at": "2026-10-14T01:54:28+09:00"
 }
