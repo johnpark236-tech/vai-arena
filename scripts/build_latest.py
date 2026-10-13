@@ -37,6 +37,25 @@ def pct(a, b):
     return (a / b - 1) * 100
 
 
+def build_packet(last: str, summary_md: str):
+    """비공개 저장소용 — AI에게 파일 하나만 첨부하면 되도록 규칙·지표·예시·오늘 시장을 한 파일로 묶는다."""
+    root = krx.ROOT
+    parts = [f"# VAI 아레나 AI 패킷 — 기준일 {krx.iso(last)}",
+             "",
+             "이 파일 하나에 대회 규칙서, 지표 목록, 예시 전략 3개, 오늘 시장 요약이 모두 들어 있습니다.",
+             "전 종목 상세가 필요하면 함께 첨부된 snapshot.csv 를 보세요.",
+             "", "---", ""]
+    for fn in ("RULES.md", "INDICATORS.md"):
+        p = root / fn
+        if p.exists():
+            parts += [p.read_text(encoding="utf-8"), "", "---", ""]
+    parts += ["# 예시 전략", ""]
+    for p in sorted((root / "examples").glob("*.json")):
+        parts += [f"## {p.stem}", "", "```json", p.read_text(encoding="utf-8").strip(), "```", ""]
+    parts += ["---", "", summary_md]
+    (OUT / "AI_PACKET.md").write_text("\n".join(parts) + "\n", encoding="utf-8")
+
+
 def main():
     days = krx.saved_days()
     if not days:
@@ -130,6 +149,8 @@ def main():
     lines += ["---", "전 종목 상세는 `snapshot.csv`, 지수 추이는 `index_recent.csv` 참고.",
               "가격은 수정 전 원본가입니다. 액면분할·증자 직후 종목의 기간 등락률은 왜곡될 수 있습니다."]
     (OUT / "market_summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    build_packet(last, "\n".join(lines))
 
     (OUT / "meta.json").write_text(json.dumps({
         "as_of": krx.iso(last), "stocks": len(today), "history_start": krx.iso(days[0]),

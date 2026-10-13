@@ -167,9 +167,24 @@ def fetch_day_pykrx(d: str):
     return df, pd.DataFrame(idx_rows)
 
 
-def fetch_day_fdr_today(d: str):
-    """오늘 날짜에 한해 FDR 당일 스냅샷으로 대체 수집."""
+def last_session_date() -> str | None:
+    """가장 최근에 실제로 열린 장의 날짜 (KOSPI 지수 마지막 일자)."""
     import FinanceDataReader as fdr
+    since = (now_kst() - timedelta(days=14)).strftime("%Y-%m-%d")
+    ix = fdr.DataReader("KS11", since)
+    if ix is None or ix.empty:
+        return None
+    return pd.Timestamp(ix.index[-1]).strftime("%Y%m%d")
+
+
+def fetch_day_fdr_today(d: str):
+    """FDR 현재 시세 스냅샷으로 대체 수집.
+    스냅샷은 '가장 최근 장'의 시세이므로 실제 장 날짜를 확인해 그 날짜로 반환한다.
+    반환: (df, idx, 실제_날짜)"""
+    import FinanceDataReader as fdr
+    actual = last_session_date()
+    if actual is None:
+        raise RuntimeError("FDR 지수로 최근 장 날짜를 확인할 수 없음")
     s = fdr.StockListing("KRX")
     s = s[s["Market"].isin(["KOSPI", "KOSDAQ"])].copy()
     df = pd.DataFrame({
@@ -180,16 +195,37 @@ def fetch_day_fdr_today(d: str):
         "marcap": s["Marcap"], "shares": s["Stocks"],
     })
     if pd.to_numeric(df["volume"], errors="coerce").fillna(0).sum() == 0:
-        return None, None
+        return None, None, actual
     df["source"] = "FDR_SNAPSHOT"
     idx_rows = []
     for mkt, sym in (("KOSPI", "KS11"), ("KOSDAQ", "KQ11")):
-        ix = fdr.DataReader(sym, iso(d), iso(d))
+        ix = fdr.DataReader(sym, iso(actual), iso(actual))
         if not ix.empty:
             r = ix.iloc[-1]
-            idx_rows.append({"date": iso(d), "market": mkt, "open": r["Open"], "high": r["High"],
+            idx_rows.append({"date": iso(actual), "market": mkt, "open": r["Open"], "high": r["High"],
                              "low": r["Low"], "close": r["Close"], "volume": r["Volume"]})
-    return df, pd.DataFrame(idx_rows)
+    return df, pd.DataFrame(idx_rows), actual
+
+
+_FDR_CACHE: dict = {}
+
+
+def _fdr_snapshot_cached(d: str):
+    """한 번 실행 중 FDR 스냅샷은 한 번만 받는다."""
+    if "snap" not in _FDR_CACHE:
+        try:
+            _FDR_CACHE["snap"] = fetch_day_fdr_today(d)
+        except Exception as ex:
+            _FDR_CACHE["snap"] = (None, None, "00000000")
+            _FDR_CACHE["err"] = str(ex)
+    return _FDR_CACHE["snap"]
+
+
+def session_closed(d: str) -> bool:
+    """d일 장이 끝났는지. 과거 날짜는 True, 오늘은 16:00 KST 이후만 True."""
+    now = now_kst()
+    today = now.strftime("%Y%m%d")
+    return d < today or (d == today and now.hour >= 16)
 
 
 # ── 저장 ─────────────────────────────────────────────────
@@ -222,11 +258,16 @@ def write_day(d: str, df: pd.DataFrame, idx: pd.DataFrame | None) -> Path:
 
 
 def collect_one(d: str, allow_fdr_today: bool = True) -> str:
-    """하루 수집. 반환: 'saved' | 'exists' | 'holiday'. 실패 시 예외."""
+    """하루 수집.
+    반환: 'saved' | 'exists' | 'holiday' | 'not_closed' | 'saved:YYYYMMDD'(대체 수집이 다른 날짜로 저장된 경우)
+    실패 시 예외."""
     if daily_path(d).exists():
         return "exists"
     if d in known_holidays():
         return "holiday"
+    if not session_closed(d):
+        # 장 시작 전·장중에는 빈 결과가 와도 휴장일로 기록하면 안 된다
+        return "not_closed"
     df = idx = None
     err = None
     try:
@@ -236,11 +277,19 @@ def collect_one(d: str, allow_fdr_today: bool = True) -> str:
             return "holiday"
     except Exception as ex:
         err = ex
-    if df is None and allow_fdr_today and d == now_kst().strftime("%Y%m%d"):
-        df, idx = fetch_day_fdr_today(d)
-        if df is None:
+    if df is None and allow_fdr_today:
+        # FDR 스냅샷은 '가장 최근 장' 하루치만 준다 → 그 날짜와 맞을 때만 사용
+        fdf, fidx, actual = _fdr_snapshot_cached(d)
+        today = now_kst().strftime("%Y%m%d")
+        if actual == d and fdf is not None:
+            df, idx = fdf, fidx
+        elif d == today and actual < d:
+            # 오늘은 장이 열리지 않았음(휴장일). 스냅샷은 지난 장 시세 → 그 날짜로 저장
             mark_holiday(d)
-            return "holiday"
+            if fdf is None or daily_path(actual).exists():
+                return "holiday"
+            write_day(actual, finalize(fdf.copy(), actual), fidx)
+            return f"saved:{actual}"
     if df is None:
         raise RuntimeError(f"{d} 수집 실패: {err}")
     write_day(d, finalize(df, d), idx)

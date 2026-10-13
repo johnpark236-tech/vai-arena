@@ -28,13 +28,13 @@ def main():
     days = krx.trading_days(a.start, a.end)
     print(f"대상 {len(days)}일 ({a.start}~{a.end})", flush=True)
 
-    stats = {"saved": 0, "exists": 0, "holiday": 0}
+    stats = {"saved": 0, "exists": 0, "holiday": 0, "not_closed": 0}
     failed = []
     t0 = time.time()
     for i, d in enumerate(days, 1):
         try:
             r = krx.collect_one(d, allow_fdr_today=False)
-            stats[r] += 1
+            stats[r.split(":")[0]] = stats.get(r.split(":")[0], 0) + 1
         except Exception as ex:
             failed.append({"date": d, "error": str(ex)[:200]})
             print(f"  ✗ {d}: {ex}", flush=True)

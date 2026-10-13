@@ -12,6 +12,7 @@
 """
 import argparse
 import json
+import os
 import subprocess
 import sys
 import time
@@ -48,7 +49,10 @@ def main():
     today = (a.date or krx.now_kst().strftime("%Y%m%d")).replace("-", "")
 
     krx.preload_names(krx.DATA / "master" / "tickers.csv")
-    result = {"date": today, "today": None, "repaired": [], "repair_failed": [], "notes": []}
+    result = {"date": today, "today": None, "repaired": [], "repair_failed": {}, "notes": []}
+    if not (os.environ.get("KRX_ID") and os.environ.get("KRX_PW")):
+        result["notes"].append("KRX_ID/KRX_PW 미등록 — pykrx 사용 불가, 최근 1일 대체 수집(FDR)만 가능. "
+                               "저장소 Settings → Secrets에 등록 필요")
 
     # 1) 오늘
     for i in range(1, a.retries + 1):
@@ -56,32 +60,35 @@ def main():
             result["today"] = krx.collect_one(today)
             break
         except Exception as ex:
-            result["notes"].append(f"시도 {i}: {str(ex)[:200]}")
+            result["notes"].append(f"오늘 시도 {i}: {str(ex)[:200]}")
             print(f"[오늘] 실패 {i}/{a.retries}: {ex}", flush=True)
             if i < a.retries:
                 time.sleep(a.wait)
     print(f"[오늘] {today}: {result['today']}", flush=True)
 
-    # 2) 빠진 날 메우기
+    # 2) 빠진 날 메우기 (오늘 이전)
     start = (pd.Timestamp(krx.iso(today)) - timedelta(days=GAP_DAYS * 2)).strftime("%Y%m%d")
     for d in krx.candidate_days(start, today):
-        if d == today or krx.daily_path(d).exists() or d in krx.known_holidays():
+        if d >= today or krx.daily_path(d).exists() or d in krx.known_holidays():
             continue
         try:
-            r = krx.collect_one(d, allow_fdr_today=False)
-            if r == "saved":
+            r = krx.collect_one(d)
+            if r.startswith("saved"):
                 result["repaired"].append(d)
                 print(f"[복구] {d} 저장", flush=True)
         except Exception as ex:
-            result["repair_failed"].append(d)
+            result["repair_failed"][d] = str(ex)[:150]
             print(f"[복구] {d} 실패: {ex}", flush=True)
 
     # 3) 마스터, 4) 최신 요약
-    if result["today"] in ("saved", "exists") or result["repaired"]:
-        run("rebuild_master.py")
-        run("build_latest.py")
+    changed = (result["today"] or "").startswith("saved") or result["repaired"]
+    if changed or not (krx.DATA / "latest" / "meta.json").exists():
+        if krx.saved_days():
+            run("rebuild_master.py")
+            run("build_latest.py")
 
-    ok = result["today"] in ("saved", "exists", "holiday")
+    ok = result["today"] in ("saved", "exists", "holiday", "not_closed") or \
+        (result["today"] or "").startswith("saved:")
     result["ok"] = ok
     status(result)
     return 0 if ok else 1

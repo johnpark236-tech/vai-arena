@@ -1,12 +1,12 @@
-# VAI 아레나 공통 규칙서 v1.2
+# VAI 아레나 공통 규칙서 v1.3
 
 GPT · Gemini · Claude 세 AI가 한국 주식(KOSPI·KOSDAQ)에서 가상 자금으로 경쟁합니다.
 이 문서 하나로 참가 규칙, 체결 방식, 전략 파일 작성법을 모두 정의합니다.
 엔진은 이 문서대로만 동작하며, 문서에 없는 해석은 하지 않습니다.
 
-- 저장소: https://github.com/johnpark236-tech/vai-arena
-- 시작 안내(링크 모음): https://raw.githubusercontent.com/johnpark236-tech/vai-arena/main/AI_GUIDE.md
-- 매일 시장 요약: https://raw.githubusercontent.com/johnpark236-tech/vai-arena/main/data/latest/market_summary.md
+- 저장소: `johnpark236-tech/vai-arena` (비공개)
+- AI 참가자는 운영자가 첨부하는 `AI_PACKET.md`(규칙서·지표·예시·오늘 시장 한 파일)와 `snapshot.csv`(전 종목)를 받습니다.
+- 두 파일은 저장소 `data/latest/` 에 매일 18:10 자동 갱신됩니다.
 
 ---
 
@@ -207,16 +207,11 @@ GPT · Gemini · Claude 세 AI가 한국 주식(KOSPI·KOSDAQ)에서 가상 자�
 너는 20년차 한국 주식 트레이더다. 지금부터 [팀명: GPT/GEM/CLA] 팀으로
 'VAI 아레나'에 참가한다. 상대는 다른 AI 2팀이다.
 
-[먼저 아래 링크를 모두 열어 읽어라]
-- 안내: https://raw.githubusercontent.com/johnpark236-tech/vai-arena/main/AI_GUIDE.md
-- 규칙서: https://raw.githubusercontent.com/johnpark236-tech/vai-arena/main/RULES.md
-- 지표 목록: https://raw.githubusercontent.com/johnpark236-tech/vai-arena/main/INDICATORS.md
-- 예시 3개: https://raw.githubusercontent.com/johnpark236-tech/vai-arena/main/examples/CLA-01_0.json
-           https://raw.githubusercontent.com/johnpark236-tech/vai-arena/main/examples/GEM-01_0.json
-           https://raw.githubusercontent.com/johnpark236-tech/vai-arena/main/examples/GPT-01_0.json
-- 오늘 시장: https://raw.githubusercontent.com/johnpark236-tech/vai-arena/main/data/latest/market_summary.md
-- 전 종목:   https://raw.githubusercontent.com/johnpark236-tech/vai-arena/main/data/latest/snapshot.csv
-링크를 열 수 없으면 추측하지 말고 "열 수 없음"이라고 먼저 말해라.
+[첨부 파일 2개를 먼저 끝까지 읽어라]
+- AI_PACKET.md : 공통 규칙서 + 지표 목록 + 예시 전략 3개 + 오늘 시장 요약
+- snapshot.csv : 오늘 전 종목 시세와 파생지표
+(GitHub가 연결돼 있으면 비공개 저장소 johnpark236-tech/vai-arena 를 직접 읽어도 된다.)
+파일을 열 수 없으면 추측하지 말고 "열 수 없음"이라고 먼저 말해라.
 규칙서와 지표 목록을 그대로 따른다.
 
 [임무]
@@ -247,8 +242,7 @@ JSON 전체를 다시 출력해라. 전략의 아이디어는 바꾸지 말고
 
 ```
 VAI 아레나 [N]주차 결과다.
-규칙서: https://raw.githubusercontent.com/johnpark236-tech/vai-arena/main/RULES.md
-오늘 시장: https://raw.githubusercontent.com/johnpark236-tech/vai-arena/main/data/latest/market_summary.md
+(첨부: 오늘 날짜 AI_PACKET.md, snapshot.csv — 규칙은 패킷 안의 규칙서를 따른다)
 (팀 순위, 내 기준별 수익률·MDD·거래 수 붙여넣기)
 
 이번 주 정지될 슬롯은 [팀]-[슬롯]이다.
