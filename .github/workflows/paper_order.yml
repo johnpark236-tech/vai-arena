@@ -1,0 +1,76 @@
+name: 모의계좌 주문
+
+# 스마트폰 GitHub 앱 → 저장소 → Actions → "모의계좌 주문" → Run workflow
+# 결과는 실행 화면 요약(Summary)과 paper/REPORT.md, (설정 시) 텔레그램으로 확인
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "할 일"
+        type: choice
+        options: ["매수", "매도", "주문취소", "잔고조회"]
+        default: "매수"
+      stock:
+        description: "종목명 또는 6자리 코드 (예: 삼성전자 / 005930)"
+        required: false
+        default: ""
+      qty:
+        description: "수량 (매도는 '전량' 가능)"
+        required: false
+        default: ""
+      price:
+        description: "가격: 시장가 또는 지정가 숫자 (예: 251000)"
+        required: false
+        default: "시장가"
+      order_id:
+        description: "주문취소할 주문번호 (예: P00003)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: paper-account
+  cancel-in-progress: false
+
+jobs:
+  order:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: 주문 처리
+        env:
+          TZ: Asia/Seoul
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+          ACTION: ${{ github.event.inputs.action }}
+          STOCK: ${{ github.event.inputs.stock }}
+          QTY: ${{ github.event.inputs.qty }}
+          PRICE: ${{ github.event.inputs.price }}
+          ORDER_ID: ${{ github.event.inputs.order_id }}
+        run: |
+          case "$ACTION" in
+            매수|매도) python scripts/paper_trade.py order --side "$ACTION" --stock "$STOCK" --qty "$QTY" --price "$PRICE" ;;
+            주문취소)  python scripts/paper_trade.py cancel --order "$ORDER_ID" ;;
+            잔고조회)  python scripts/paper_trade.py report ;;
+          esac
+
+      - name: 계좌 저장
+        if: always()
+        run: |
+          git config user.name  "vai-arena-bot"
+          git config user.email "vai-arena-bot@users.noreply.github.com"
+          git add paper/
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "paper: ${{ github.event.inputs.action }} ${{ github.event.inputs.stock }} ${{ github.event.inputs.qty }}"
+          for i in 1 2 3 4 5; do git pull --rebase origin "${GITHUB_REF_NAME}" && git push && exit 0; sleep 5; done
+          exit 1

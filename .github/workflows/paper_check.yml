@@ -1,0 +1,58 @@
+name: 모의계좌 체결 확인
+
+# 장중 30분마다 미체결 지정가·예약주문 체결 확인, 15:45 장 마감 처리(당일 주문 만료) + 잔고 보고서
+
+on:
+  schedule:
+    - cron: "5,35 0-5 * * 1-5"   # 09:05 ~ 14:35 KST, 30분 간격
+    - cron: "5 6 * * 1-5"        # 15:05 KST
+    - cron: "45 6 * * 1-5"       # 15:45 KST 장 마감 처리
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: paper-account
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: 처리할 일 있는지 확인
+        id: need
+        run: |
+          python3 - <<'EOF' >> "$GITHUB_OUTPUT"
+          import json, os, datetime as dt
+          p = "paper/account.json"
+          pend = json.load(open(p))["pending"] if os.path.exists(p) else []
+          h = (dt.datetime.utcnow() + dt.timedelta(hours=9)).hour
+          print("run=" + ("true" if pend or h >= 15 else "false"))
+          EOF
+      - uses: actions/setup-python@v5
+        if: steps.need.outputs.run == 'true'
+        with:
+          python-version: "3.11"
+          cache: pip
+      - if: steps.need.outputs.run == 'true'
+        run: pip install -r requirements.txt
+      - name: 체결 확인
+        if: steps.need.outputs.run == 'true'
+        env:
+          TZ: Asia/Seoul
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+        run: python scripts/paper_trade.py check
+      - name: 계좌 저장
+        if: always() && steps.need.outputs.run == 'true'
+        run: |
+          git config user.name  "vai-arena-bot"
+          git config user.email "vai-arena-bot@users.noreply.github.com"
+          git add paper/
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "paper: 체결 확인 $(TZ=Asia/Seoul date +%m-%d_%H:%M)"
+          for i in 1 2 3 4 5; do git pull --rebase origin "${GITHUB_REF_NAME}" && git push && exit 0; sleep 5; done
+          exit 1
