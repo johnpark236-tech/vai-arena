@@ -1,9 +1,10 @@
 {
-  "date": "20261105",
+  "date": "20261106",
   "today": "not_closed",
-  "repaired": [],
+  "repaired": [
+    "20261105"
+  ],
   "repair_failed": {
-    "20261006": "20261006 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)",
     "20261007": "20261007 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)",
     "20261008": "20261008 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)",
     "20261009": "20261009 수집 실패: KRX_ID / KRX_PW 환경변수가 없습니다 (GitHub Secrets 확인)"
@@ -12,5 +13,5 @@
     "KRX_ID/KRX_PW 미등록 — pykrx 사용 불가, 최근 1일 대체 수집(FDR)만 가능. 저장소 Settings → Secrets에 등록 필요"
   ],
   "ok": true,
-  "finished_at": "2026-11-05T05:00:22+09:00"
+  "finished_at": "2026-11-06T02:19:16+09:00"
 }
