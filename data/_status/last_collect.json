@@ -1,11 +1,13 @@
 {
-  "date": "20261126",
+  "date": "20261127",
   "today": "not_closed",
-  "repaired": [],
+  "repaired": [
+    "20261126"
+  ],
   "repair_failed": {},
   "notes": [
     "KRX_ID/KRX_PW 미등록 — pykrx 사용 불가, 최근 1일 대체 수집(FDR)만 가능. 저장소 Settings → Secrets에 등록 필요"
   ],
   "ok": true,
-  "finished_at": "2026-11-26T06:58:05+09:00"
+  "finished_at": "2026-11-27T03:57:20+09:00"
 }
